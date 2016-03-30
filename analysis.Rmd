@@ -1,0 +1,41 @@
+---
+title: "Predicting Exercise Correctness with Practical Machine Learning"
+author: "James Kelleher"
+date: "March 29, 2016"
+output: html_document
+---
+
+
+```{r}
+
+train_url <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+test_url <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+training <- read.csv(url(train_url), na.strings = c('', 'NA', '#DIV/0!'))
+testing <- read.csv(url(test_url))
+
+training <- training[, -(1:7)]
+testing  <- testing[, -(1:7)]
+
+is_data_rich <- function(vec, allowed_na_proportion = .05) {
+    mean(is.na(vec)) <= allowed_na_proportion
+}
+
+data_rich_cols <- apply(training, 2, is_data_rich, allowed_na_proportion = 0)
+training <- training[, data_rich_cols]
+
+dim(training)
+
+in_train <- createDataPartition(training$classe, list=F, p=.6)
+
+train_train <- training[in_train, ]
+train_validate <- training[-in_train, ]
+
+fit <- train(classe ~ ., train_train, method="rf", ntree=10)
+
+confusionMatrix(train_validate$classe, predict(fit, train_validate))
+
+cols_in_train <- names(testing) %in% names(training)
+
+predict(fit, testing[, cols_in_train])
+```
