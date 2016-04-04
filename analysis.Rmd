@@ -64,7 +64,7 @@ train_train <- training[in_train, ]
 train_validate <- training[-in_train, ]
 ```
 
-We then use the method of random forests to train the "classe" variable (a factor with labels A:E that identifies form correctness category) on the rest of the data. We set `ntree` to 10 in order to speed up the algorithm.
+We then use the method of random forests to train the "classe" variable (a factor with labels A:E that identifies form correctness category) on the rest of the data. We set `ntree` to 10 in order to speed up the algorithm. While reducing the number of trees we grow may lead to a less accurate prediction, ultimately this loss is minor and the model is still highly predictive, as will be demonstrated later in the paper.
 
 ```{r, cache=T}
 fit <- train(classe ~ ., train_train, method="rf", ntree=10)
@@ -72,13 +72,13 @@ fit <- train(classe ~ ., train_train, method="rf", ntree=10)
 
 # Validating the data
 
-To obtain the in-sample error rate, we can look at the confusion matrix between the predicted classe variable and actual class variable of the validation set.
+To estimate the out-of-sample error rate, we can look at the confusion matrix between the predicted classe variable and actual class variable of the validation set.
 
 ```{r}
 confusionMatrix(train_validate$classe, predict(fit, train_validate))
 ```
 
-Based on this information, we can say that the in-sample error rate is about 0.9878.
+Based on the accuracy of the model on the validation set, we expect the out-of-sample error rate to be about 0.9878.
 
 # Predictions of the test set
 

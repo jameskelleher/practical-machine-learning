@@ -110,12 +110,12 @@ dim(training)</code></pre>
 
 train_train &lt;- training[in_train, ]
 train_validate &lt;- training[-in_train, ]</code></pre>
-<p>We then use the method of random forests to train the “classe” variable (a factor with labels A:E that identifies form correctness category) on the rest of the data. We set <code>ntree</code> to 10 in order to speed up the algorithm.</p>
+<p>We then use the method of random forests to train the “classe” variable (a factor with labels A:E that identifies form correctness category) on the rest of the data. We set <code>ntree</code> to 10 in order to speed up the algorithm. While reducing the number of trees we grow may lead to a less accurate prediction, ultimately this loss is minor and the model is still highly predictive, as will be demonstrated later in the paper.</p>
 <pre class="r"><code>fit &lt;- train(classe ~ ., train_train, method=&quot;rf&quot;, ntree=10)</code></pre>
 </div>
 <div id="validating-the-data" class="section level1">
 <h1>Validating the data</h1>
-<p>To obtain the in-sample error rate, we can look at the confusion matrix between the predicted classe variable and actual class variable of the validation set.</p>
+<p>To estimate the out-of-sample error rate, we can look at the confusion matrix between the predicted classe variable and actual class variable of the validation set.</p>
 <pre class="r"><code>confusionMatrix(train_validate$classe, predict(fit, train_validate))</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
@@ -148,7 +148,7 @@ train_validate &lt;- training[-in_train, ]</code></pre>
 ## Detection Rate         0.2835   0.1897   0.1716   0.1602   0.1825
 ## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
 ## Balanced Accuracy      0.9957   0.9907   0.9856   0.9903   0.9964</code></pre>
-<p>Based on this information, we can say that the in-sample error rate is about 0.9878.</p>
+<p>Based on the accuracy of the model on the validation set, we expect the out-of-sample error rate to be about 0.9878.</p>
 </div>
 <div id="predictions-of-the-test-set" class="section level1">
 <h1>Predictions of the test set</h1>
