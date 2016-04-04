@@ -1,41 +1,93 @@
 ---
-title: "Predicting Exercise Correctness with Practical Machine Learning"
+title: "Predicting Exercise Correctness with Random Forests"
 author: "James Kelleher"
 date: "March 29, 2016"
 output: html_document
 ---
 
+# Synopsis
 
-```{r}
+The purpose of this assignment is to use data collected by fitness devices to predict the correctness of exercise form. Each participant's form is broken down into one of six classes; we will use the method of random forests to predict the category of 20 other participants.
 
+# Preliminaries
+
+This analysis uses the `caret` and `randomForest` libraries for prediction. We also make sure to set the seed.
+
+```{r, message=FALSE}
+library(caret)
+library(randomForest)
+
+set.seed(12345)
+```
+
+# Getting and cleaning the data
+
+We read the CSVs into data frames directly from the URL.
+
+```{r, cache=TRUE}
 train_url <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 test_url <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 
-training <- read.csv(url(train_url), na.strings = c('', 'NA', '#DIV/0!'))
+training <- read.csv(url(train_url), na.strings = c('', 'NA', '#DIV/0!'))  # there are many missing values in the
+                                                                           # training set
 testing <- read.csv(url(test_url))
+```
 
+The first 7 columns do not provide relevant information with regards to the participants' form class. In order for the categorization algorithm to run correctly, we discard them.
+
+```{r}
 training <- training[, -(1:7)]
 testing  <- testing[, -(1:7)]
+```
 
-is_data_rich <- function(vec, allowed_na_proportion = .05) {
+We also remove any columns that are missing values. This stil leaves 52 variables, enough for the machine learning algorithm to function.
+
+```{r}
+is_data_rich <- function(vec, allowed_na_proportion = 0) {
     mean(is.na(vec)) <= allowed_na_proportion
 }
 
-data_rich_cols <- apply(training, 2, is_data_rich, allowed_na_proportion = 0)
+data_rich_cols <- apply(training, 2, is_data_rich)
 training <- training[, data_rich_cols]
 
 dim(training)
+```
 
+# Training the data
+
+We use the `caret` package to break off part of the training set for validation purposes later on.
+
+```{r}
 in_train <- createDataPartition(training$classe, list=F, p=.6)
 
 train_train <- training[in_train, ]
 train_validate <- training[-in_train, ]
+```
 
+We then use the method of random forests to train the "classe" variable (a factor with labels A:E that identifies form correctness category) on the rest of the data. We set `ntree` to 10 in order to speed up the algorithm.
+
+```{r, cache=T}
 fit <- train(classe ~ ., train_train, method="rf", ntree=10)
+```
 
+# Validating the data
+
+To obtain the in-sample error rate, we can look at the confusion matrix between the predicted classe variable and actual class variable of the validation set.
+
+```{r}
 confusionMatrix(train_validate$classe, predict(fit, train_validate))
+```
 
-cols_in_train <- names(testing) %in% names(training)
+Based on this information, we can say that the in-sample error rate is about 0.9878.
+
+# Predictions of the test set
+
+We use our model to predict 20 additional cases.
+
+```{r}
+cols_in_train <- names(testing) %in% names(training)  # ensure we provide the expected input to the model
 
 predict(fit, testing[, cols_in_train])
 ```
+
+According to the Coursera project website, these are the correct classes for these 20 observations.
